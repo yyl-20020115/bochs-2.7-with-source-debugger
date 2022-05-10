@@ -8,7 +8,7 @@ e.g.
 
 It supports only one elf binary at a time for now. 
 However, the source files are not limited.
-This is perfect debuging tool for build your own OS.
+This is perfect debuging tool for building your own OS.
 
 Dependency: 
 Pls download binutils' source code and build like
