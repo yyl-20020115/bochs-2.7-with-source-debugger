@@ -1,3 +1,26 @@
+Usage:
+type ":"+full path of binary file with elf32/elf64 format containing debug info
+into the gui input box.
+when breaking on certain instruction with in the range of that binary file 
+in asm window the correspoing source with show in source window
+e.g.
+:/home/yilin/Working/linux-0.11-m/linux-0.11-gcc-9.4.0/tools/system
+
+It supports only one elf binary at a time for now. 
+However, the source files are not limited.
+This is perfect debuging tool for build your own OS.
+
+Dependency: 
+Pls download binutils' source code and build like
+./configure
+make
+sudo make install
+
+as the libbfd an libiberty are needed.
+
+Best, 
+Yilin
+---------------------------------------------------
 Bochs - The cross platform IA-32 (x86) emulator
 Updated: Sun Aug  1 10:07:00 CEST 2021
 Version: 2.7
