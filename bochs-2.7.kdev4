@@ -1,0 +1,4 @@
+[Project]
+CreatedFrom=Makefile
+Manager=KDevCustomMakeManager
+Name=bochs-2.7
