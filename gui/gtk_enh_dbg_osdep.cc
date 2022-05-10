@@ -34,8 +34,8 @@ const GdkColor ColorList[16] = {
     RGB(216,216,255),   // purple
     RGB(200,255,200),   // green
     RGB(255,230,200),   // orange
-    RGB(255,255,255),   // more user definable
-    RGB(255,255,255),
+    RGB(0,0,0),   // black
+    RGB(255,0,255), //8
     RGB(255,255,255),
     RGB(255,255,255),
     RGB(255,255,255),
@@ -210,6 +210,7 @@ unsigned int CurXSize = 0;      // last known size of main client window
 int DumpSelRow = 0;             // keeps track of "clicks" on MemDump entries
 int SelectedEntry = 0;          // keeps track of "clicks" on ASM entries
 int SelectedSrcLine = 0;
+
 bool UpdateOWflag = FALSE;
 bool HitBrkflag = FALSE;
 bool ForcingCheck = FALSE;  // using a hotkey to flip a menu item checkmark
@@ -603,15 +604,16 @@ int GetASMTopIdx()
     AsmPgSize = (int) gtk_adjustment_get_page_size(va) / ListLineRatio;
     return ((int) gtk_adjustment_get_value(va) / ListLineRatio);
 }
-void DoSrcCalc()
+int GetSRCTopIdx()
 {
     GtkAdjustment *va;
     va = gtk_tree_view_get_vadjustment ( GTK_TREE_VIEW(LV[SRCT_WND]) );
     // calculate the number of vertical "pixels" in one row (as a fraction of the scroll range)
     SrcRangeLower = (int)gtk_adjustment_get_lower(va);
     SrcRangeUpper = (int)gtk_adjustment_get_upper(va);
-    SrcPageSize = (int) gtk_adjustment_get_page_size(va);
-
+    SrcLineRatio = (int) (SrcRangeUpper - SrcRangeLower) / GetSrcLineCount();
+    SrcPageSize = (int) gtk_adjustment_get_page_size(va) / SrcLineRatio;
+    return ((int)gtk_adjustment_get_value(va) /SrcLineRatio);
 }
 void DoSrcListSelect(int index)
 {
@@ -628,18 +630,11 @@ void ScrollASM(int pixels)
     GtkAdjustment *va = gtk_tree_view_get_vadjustment ( GTK_TREE_VIEW(LV[ASM_WND]) );
     gtk_adjustment_set_value(GTK_ADJUSTMENT(va), gtk_adjustment_get_value(va) + pixels);
 }
-void UpdateSRC()
-{
-    GtkAdjustment *va = gtk_tree_view_get_vadjustment ( GTK_TREE_VIEW(LV[SRCT_WND]) );
-    int val = gtk_adjustment_get_value(GTK_ADJUSTMENT(va));
-    gtk_adjustment_set_value(GTK_ADJUSTMENT(va), val+1);
-    gtk_adjustment_set_value(GTK_ADJUSTMENT(va), val+0);
 
-}
-void ScrollSRCTo(int pixels)
+void ScrollSRC(int pixels)
 {
     GtkAdjustment *va = gtk_tree_view_get_vadjustment ( GTK_TREE_VIEW(LV[SRCT_WND]) );
-    gtk_adjustment_set_value(GTK_ADJUSTMENT(va), pixels);
+    gtk_adjustment_set_value(GTK_ADJUSTMENT(va), gtk_adjustment_get_value(va) + pixels);
 }
 // handle checkmarks in the "wordsize" popup menu
 // Note: setting/clearing a checkmark sends an immediate "activate" signal to the associated menuitem
@@ -1290,6 +1285,7 @@ gboolean AsmMouseDown_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
     if (SelectedEntry >= MAX_ASM || SelectedEntry < 0)
         SelectedEntry = MAX_ASM -1;
     SelAsm[SelectedEntry] ^= 1;
+    SelectedSrcLine = AsmLine[SelectedEntry] - 1; 
     Invalidate (ASM_WND);
     return FALSE;
 }
@@ -1308,7 +1304,10 @@ gboolean SrcMouseDown_cb(GtkWidget *widget, GdkEventButton *event, gpointer data
     int lc = GetSrcLineCount();
     if (SelectedSrcLine >= lc || SelectedSrcLine < 0)
         SelectedSrcLine = lc -1;
-    
+    for(int i = 0;i<MAX_ASM;i++)
+    {
+        SelAsm[i] =(AsmLine[i] == SelectedSrcLine+1);
+    }
     Invalidate (SRCT_WND);
     return FALSE;
 }
@@ -1578,7 +1577,9 @@ void Src_DblClick (GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn *
     sizing_cancel();
     if (AtBreak == FALSE)
         return;
-    SetBreak(SelectedEntry = FindAsmIndex(SelectedSrcLine));
+    SetSrcBreakPoint(SelectedSrcLine,!IsSrcBreakPoint(SelectedSrcLine));
+    SetBreak(SelectedEntry = FindAsmIndex(SelectedSrcLine+1));
+    Invalidate(SRCT_WND);
 }
 
 void Mem_DblClick (GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn *col, gpointer data)
@@ -1930,10 +1931,11 @@ static gboolean VGAWrefreshTick(GtkWidget *widget)
         if (--PO_Tdelay == 0)   // on a timeout, add a lf to complete the line
             ParseIDText ("\n");
     }
-    Invalidate (0);
-    Invalidate (1);
+    Invalidate (REG_WND);
+    Invalidate (ASM_WND);
     if (DViewMode != VIEW_PTREE)
-        Invalidate (2);
+        Invalidate (DUMP_WND);
+    Invalidate (SRCT_WND);
     vgaw_refresh = TRUE;
     return TRUE;
 }
@@ -1984,7 +1986,7 @@ void ListClr_PaintCb(GtkTreeViewColumn *col,
     gint rownum = 0;
     //if(acolnum==(void*)~0) return;
 
-    if (AtBreak == FALSE)
+    if (AtBreak == FALSE && colnum>=0)
     {
         g_object_set(renderer, "cell-background-gdk", &mgray, "cell-background-set", TRUE, NULL);
         return;
@@ -1993,6 +1995,9 @@ void ListClr_PaintCb(GtkTreeViewColumn *col,
     {
         g_object_set(renderer, "foreground-gdk", &fg_black, "foreground-set", TRUE, NULL);
         g_object_set(renderer, "cell-background-gdk", &white, "cell-background-set", TRUE, NULL);
+        g_object_set(renderer, "weight", PANGO_WEIGHT_NORMAL, "weight-set", TRUE,
+    "style", PANGO_STYLE_NORMAL, "style-set", TRUE, NULL);
+
         colnum = -colnum -3*SRCT_WND;
         gtk_tree_model_get (model, iter, 3, &rownum, -1);
         if(colnum <=1 && rownum == GetLastLine()-1)
@@ -2006,10 +2011,17 @@ void ListClr_PaintCb(GtkTreeViewColumn *col,
             g_object_set(renderer, "weight", PANGO_WEIGHT_NORMAL, "weight-set", TRUE,
                 "style", PANGO_STYLE_NORMAL, "style-set", TRUE, NULL);
         }
-        if(rownum==SelectedSrcLine)
+        if(IsSrcBreakPoint(rownum))
         {
-            g_object_set(renderer, "foreground-gdk", &ColorList[6], "foreground-set", TRUE, NULL);
-            g_object_set(renderer, "cell-background-gdk", &ColorList[4], "cell-background-set", TRUE, NULL);
+            g_object_set(renderer, "style", PANGO_STYLE_ITALIC, "style-set", TRUE, NULL);
+            g_object_set(renderer, "foreground-gdk", &fg_red, "foreground-set", TRUE, NULL);
+            g_object_set(renderer, "cell-background-gdk", &white, "cell-background-set", TRUE, NULL);
+        }
+        else if(rownum==SelectedSrcLine)
+        {
+            g_object_set(renderer, "weight", PANGO_WEIGHT_BOLD, "weight-set", TRUE, NULL);
+            g_object_set(renderer, "foreground-gdk", &ColorList[8], "foreground-set", TRUE, NULL);
+            g_object_set(renderer, "cell-background-gdk", &ColorList[3], "cell-background-set", TRUE, NULL);
         }
         return;
     }
@@ -2050,8 +2062,8 @@ void ListClr_PaintCb(GtkTreeViewColumn *col,
         if (SelAsm[rownum] != FALSE)     // is this row selected?
         {
             // if selected, foreground of column 0 = white, background = blue
-            g_object_set(renderer, "foreground-gdk", &ColorList[1], "foreground-set", TRUE, NULL);
-            g_object_set(renderer, "cell-background-gdk",&mgray, "cell-background-set", TRUE, NULL);
+            g_object_set(renderer, "foreground-gdk", &ColorList[8], "foreground-set", TRUE, NULL);
+            g_object_set(renderer, "cell-background-gdk",&ColorList[3], "cell-background-set", TRUE, NULL);
             if(colnum==4)
             g_object_set(renderer, "weight", PANGO_WEIGHT_NORMAL, "weight-set", TRUE,
                 "style", PANGO_STYLE_NORMAL, "style-set", TRUE, NULL);

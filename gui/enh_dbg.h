@@ -58,11 +58,11 @@ void HideTree();
 void FillPTree();
 
 int GetASMTopIdx();
-//int GetSrcTopIdx();
+int GetSRCTopIdx();
 
 void ScrollASM(int pixels);
-void ScrollSRCTo(int pixels);
-void UpdateSRC();
+void ScrollSRC(int pixels);
+
 unsigned int GetLastLine();
 
 void GetLIText(int listnum, int itemnum, int column, char *buf);
@@ -164,6 +164,8 @@ extern bool vgaw_refresh;
 #endif
 
 // User Customizable initial settings:
+extern bool IsSrcBreakPoint(unsigned int n);
+extern void SetSrcBreakPoint(unsigned int n,bool b);
 
 extern bool SeeReg[8];
 
@@ -291,6 +293,7 @@ extern void DoSrcListSelect(int index);
 extern int SrcRangeLower;
 extern int SrcRangeUpper;
 extern int SrcPageSize;
+extern int SrcLineRatio;
 // Command stuff
 extern int CommandHistoryIdx;
 #define CmdHistorySize 64

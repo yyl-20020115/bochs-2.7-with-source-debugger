@@ -27,14 +27,31 @@ extern char* disasm(const Bit8u *opcode, bool is_32, bool is_64, char *disbufptr
 
 #include "enh_dbg.h"
 #include "srcshow.h"
-
+#include <gtk/gtk.h>
 std::vector<std::string> lines;
+std::vector<bool> breakpoints;
 unsigned int last_line = 0;
 unsigned int load_line = 0;
 unsigned int GetLastLine()
 {
     return last_line;
 }
+bool IsSrcBreakPoint(unsigned int n)
+{
+    if(n<breakpoints.size())
+    {
+        return breakpoints[n];
+    }
+    return false;
+}
+void SetSrcBreakPoint(unsigned int n,bool b)
+{
+    if(n<breakpoints.size())
+    {
+        breakpoints[n]=b;
+    }
+}
+
 // Match stuff
 #define MATCH_TRUE 1
 #define MATCH_FALSE 0
@@ -189,7 +206,7 @@ int AsmLineCount = 1;          // # of disassembled asm lines loaded
 int SrcPageSize=1;
 int SrcRangeLower = 1;
 int SrcRangeUpper = 1;
-
+int SrcLineRatio = 1;
 int GetSrcLineCount()
 {
     return (int)lines.size();
@@ -958,26 +975,38 @@ void FillSrc()
     if (ResizeColmns != FALSE)
         RedrawColumns(SRCT_WND);
     EndListUpdate(SRCT_WND);
-    UpdateSRC();
 }
 
 #endif
-void doSrcScroll(unsigned int line)
+void doSrcScroll(unsigned int nli)
 {
-    DoSrcCalc();
-    if(line ==0) return;
-    line --;
-    int SrcLineCount = GetSrcLineCount();
-    int SrcMaxValue = SrcRangeUpper - SrcRangeLower;
-    double SrcLineHeight = (double)SrcMaxValue/(double)SrcLineCount;
-    int ToValue = (int)(SrcLineHeight*line);
-    ToValue -= SrcPageSize/2;
-    if (ToValue < SrcRangeLower)
-        ToValue = SrcRangeLower;
-    if (ToValue > SrcMaxValue)
-        ToValue = SrcMaxValue;
-    ScrollSRCTo (ToValue);
-    //DoSrcListSelect(line);
+    int CurTopIdx =GetSRCTopIdx();
+    if(nli ==0) return;
+    nli --;
+    
+    if (nli < CurTopIdx || nli >= CurTopIdx + SrcPageSize - bottommargin)
+    {
+        // need to scroll!
+        int ScrollLines = nli - CurTopIdx - topmargin;
+        int j = GetSrcLineCount() - CurTopIdx - SrcPageSize;
+        // limit ScrollLines by the theoretical max and min
+        if (ScrollLines > j)
+            ScrollLines = j + 1;        // just a little extra to make sure
+        if (ScrollLines < -CurTopIdx)
+            ScrollLines = -CurTopIdx - 1;   // just a little extra to make sure
+        // convert # of scroll lines to pixels
+        ScrollSRC (ScrollLines * SrcLineRatio);
+    }
+//     int SrcLineCount = GetSrcLineCount();
+//     int SrcMaxValue = SrcRangeUpper - SrcRangeLower;
+//     double SrcLineHeight = (double)SrcMaxValue/(double)SrcLineCount;
+//     int ToValue = (int)(SrcLineHeight*line);
+//     ToValue -= SrcPageSize/2;
+//     if (ToValue < SrcRangeLower)
+//         ToValue = SrcRangeLower;
+//     if (ToValue > SrcMaxValue)
+//         ToValue = SrcMaxValue;
+//     ScrollSRCTo (ToValue);
     Invalidate(SRCT_WND);        // "current opcode" in ASM window needs redrawing
 }
 
@@ -1044,6 +1073,8 @@ void FillAsm(Bit64u LAddr, int MaxLines)
                 {
                     if(on_file(fi,lines))
                     {
+                        breakpoints.clear();
+                        for(int i=0;i<lines.size();i++) breakpoints.push_back(false);
                         //reload lines
                         load_line=ln;
                     }
@@ -2293,7 +2324,12 @@ void RefreshDataWin()
             FillPTree();
     }
 }
-
+uint timer_id = 0;
+void OnScrollTimer()
+{
+    doSrcScroll(last_line);
+    gtk_timeout_remove(timer_id);   
+}
 // performs tasks whenever the simulation "breaks"
 void OnBreak()
 {
@@ -2358,6 +2394,8 @@ void OnBreak()
         {
             if(on_file(fi,lines))
             {
+                breakpoints.clear();
+                for(int i=0;i<lines.size();i++) breakpoints.push_back(false);
                 //reload lines
                 load_line=ln;
             }
@@ -2374,12 +2412,18 @@ void OnBreak()
     if (load_line!=0)
     {
         FillSrc();
-        load_line = 0;
     }
     if(last_line!=0)
     {
-        doSrcScroll(last_line);
+        if(load_line == 0)
+        {
+            doSrcScroll(last_line);
+        }else
+        {
+            timer_id = gtk_timeout_add(250, (GtkFunction)OnScrollTimer, NULL);
+        }
     }
+    load_line = 0;
 #endif
 
     if (doDumpRefresh != FALSE)
