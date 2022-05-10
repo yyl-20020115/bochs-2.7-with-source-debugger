@@ -965,6 +965,8 @@ void FillSrc()
 void doSrcScroll(unsigned int line)
 {
     DoSrcCalc();
+    if(line ==0) return;
+    line --;
     int SrcLineCount = GetSrcLineCount();
     int SrcMaxValue = SrcRangeUpper - SrcRangeLower;
     double SrcLineHeight = (double)SrcMaxValue/(double)SrcLineCount;
@@ -991,9 +993,9 @@ void FillAsm(Bit64u LAddr, int MaxLines)
     char AsmData[BX_GUI_DB_ASM_DATA];  // 5K for binary disassembly data
     char *s, *p = AsmData;  // just to avoid a compiler warning
     char *cols[3];
-    char asmtxt[200];
+    char asmtxt[1024]={0};
 #ifdef USE_SRCSHOW
-    char inftxt[512];
+    char inftxt[512]={0};
 #endif
     cols[0] = asmtxt;
     cols[1] = asmtxt + 36;
@@ -1054,6 +1056,8 @@ void FillAsm(Bit64u LAddr, int MaxLines)
                 {
                     last_line = ln;
                     AsmLine[AsmLineCount]=ln;
+                    snprintf(inftxt,sizeof(inftxt)," <%s(%u),%s>", fn,ln,fi);
+                    strncat(cols[2],inftxt,sizeof(asmtxt)-136);
                 }
                 
             }
@@ -3547,6 +3551,10 @@ void ActivateMenuItem (int cmd)
             SIM->set_log_viewer(LogView);
             SetMenuCheckmark((int)LogView, CHK_CMD_LOGVIEW);
             break;
+    }
+    if(StatusChange)
+    {
+        Invalidate(SRCT_WND);
     }
 }
 

@@ -1995,7 +1995,7 @@ void ListClr_PaintCb(GtkTreeViewColumn *col,
         g_object_set(renderer, "cell-background-gdk", &white, "cell-background-set", TRUE, NULL);
         colnum = -colnum -3*SRCT_WND;
         gtk_tree_model_get (model, iter, 3, &rownum, -1);
-        if(colnum <=1 && rownum == GetLastLine())
+        if(colnum <=1 && rownum == GetLastLine()-1)
         {
             g_object_set(renderer, "foreground-gdk", &AsmColors[1], "foreground-set", TRUE, NULL);
             if(colnum ==1)
