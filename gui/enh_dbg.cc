@@ -1089,6 +1089,11 @@ void FillAsm(Bit64u LAddr, int MaxLines)
                     AsmLine[AsmLineCount]=ln;
                     snprintf(inftxt,sizeof(inftxt)," <%s(%u),%s>", fn,ln,fi);
                     strncat(cols[2],inftxt,sizeof(asmtxt)-136);
+                }else if(fn!=0)
+                {
+                    
+                    snprintf(inftxt,sizeof(inftxt)," <%s>", fn);
+                    strncat(cols[2],inftxt,sizeof(asmtxt)-136);
                 }
                 
             }
@@ -2400,6 +2405,10 @@ void OnBreak()
                 for(int i=0;i<lines.size();i++) breakpoints.push_back(false);
                 //reload lines
                 load_line=ln;
+                if(load_line == 0)
+                {
+                    load_line= 1;
+                }
             }
             const char* p = strrchr(fi,'/');
             if(p!=0){

@@ -207,7 +207,7 @@ static std::string last_file;
 
 bool on_file(const char *path,std::vector<std::string>& lines)
 {
-    if(last_file!=path)
+    if(last_file!=path ||lines.size()==0)
     {
         load_lines(path,lines);
         last_file=path;
@@ -220,7 +220,7 @@ size_t load_lines ( const char *path,std::vector<std::string>& lines )
     std::fstream file;
     std::string line;
     file.open ( path,std::ios_base::in );
-    if(file){
+    if(file.is_open()){
         lines.clear();
         while ( !file.eof() ) {
             getline (file,line );

@@ -19,7 +19,7 @@ Executable=file:///home/yilin/Working/bochs-2.7/bochs
 External Terminal=konsole --noclose --workdir %workdir -e %exe
 Project Target=
 Use External Terminal=false
-Working Directory=file:///home/yilin/Working/linux-0.11-m/linux-0.11-gcc-9.4.0/
+Working Directory=file:///home/yilin/Working/linux-0.11-m/Linux-0.11-2022
 isExecutable=true
 
 [Project]

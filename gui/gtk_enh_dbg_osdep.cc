@@ -607,11 +607,14 @@ int GetASMTopIdx()
 int GetSRCTopIdx()
 {
     GtkAdjustment *va;
+    SrcPageSize = 0;
+    int SrcLineCount = GetSrcLineCount();
+    if(SrcLineCount == 0) return 0;
     va = gtk_tree_view_get_vadjustment ( GTK_TREE_VIEW(LV[SRCT_WND]) );
-    // calculate the number of vertical "pixels" in one row (as a fraction of the scroll range)
+
     SrcRangeLower = (int)gtk_adjustment_get_lower(va);
     SrcRangeUpper = (int)gtk_adjustment_get_upper(va);
-    SrcLineRatio = (int) (SrcRangeUpper - SrcRangeLower) / GetSrcLineCount();
+    SrcLineRatio = (int) (SrcRangeUpper - SrcRangeLower) / SrcLineCount;
     SrcPageSize = (int) gtk_adjustment_get_page_size(va) / SrcLineRatio;
     return ((int)gtk_adjustment_get_value(va) /SrcLineRatio);
 }
