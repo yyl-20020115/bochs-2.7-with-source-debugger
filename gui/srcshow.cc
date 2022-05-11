@@ -8,7 +8,11 @@
 #include <fstream>
 
 std::string last_path;
-
+int get_elf_path(std::string& p)
+{
+    p = last_path;
+    return p.size();
+}
 /* These global variables are used to pass information between
    translate_addresses and find_address_in_section.  */
 

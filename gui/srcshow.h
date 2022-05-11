@@ -8,6 +8,8 @@
 #include <vector>
 #include <string>
 
+int get_elf_path(std::string& p);
+
 int do_bfd_init();
 int load_bfd(const char *path);
 void unload_bfd();

@@ -134,12 +134,12 @@ int OneCharWide =0;    // average width of a char in current font (pixels)
 int Sizing = 0;     // current "resizing/docking mode"
 int Resize_HiX =0;     // horizontal limits of the current resize operation (pixels)
 int Resize_LoX =0;
-unsigned ListWidthPix[3] = {5,7,8}; // set initial proportions of Reg, Asm, Dump windows
+unsigned ListWidthPix[4] = {5,7,8}; // set initial proportions of Reg, Asm, Dump windows
 int CurCenterList = 0;
 bool DumpHasFocus = FALSE;
 // BarClix holds the x-axis position (in pixels or logical units) of the two resizing bars,
 // in parent coordinates (ie. any window that contains the lists)
-unsigned short BarClix[2];
+unsigned short BarClix[3];
 
 bool AtBreak = FALSE;    // Status indicators
 bool CpuModeChange =0;
@@ -3748,7 +3748,10 @@ void ReadSettings()
           PrevDAD = 0;
         } else if (!strcmp(param, "DockOrder")) {
           DockOrder = strtoul(val, NULL, 16);
-        } else if ((len1 == 15) && !strncmp(param, "ListWidthPix[", 13) && (param[14] == ']')) {
+        } else if (!strcmp(param, "LastELFPath")) {
+            load_bfd(val);
+        } 
+        else if ((len1 == 15) && !strncmp(param, "ListWidthPix[", 13) && (param[14] == ']')) {
           if ((param[13] < '0') || (param[13] > '2')) {
             fprintf(stderr, "bx_enh_dbg.ini: invalid index for option SeeReg[x]\n");
             continue;
@@ -3787,6 +3790,10 @@ void WriteSettings()
   fprintf(fd, "DefaultAsmLines = %d\n", DefaultAsmLines);
   fprintf(fd, "DumpWSIndex = %d\n", DumpWSIndex);
   fprintf(fd, "DockOrder = 0x%03x\n", DockOrder);
+  std::string p;
+  get_elf_path(p);
+  fprintf(fd, "LastELFPath = %s\n", p.c_str());
+  
   for (i = 0; i < 3; i++) {
     fprintf(fd, "ListWidthPix[%d] = %d\n", i, ListWidthPix[i]);
   }
@@ -3796,24 +3803,25 @@ void WriteSettings()
 
 void InitDebugDialog()
 {
-  // redirect notify callback to the debugger specific code
+#ifdef USE_SRCSHOW
+    int ret =do_bfd_init();
+#endif  
+// redirect notify callback to the debugger specific code
   SIM->get_notify_callback(&old_callback, &old_callback_arg);
   assert (old_callback != NULL);
   SIM->set_notify_callback(enh_dbg_notify_callback, NULL);
   ReadSettings();
   DoAllInit();    // non-os-specific init stuff
   OSInit();
-#ifdef USE_SRCSHOW
-    int ret =do_bfd_init();
-#endif
+
 }
 
 void CloseDebugDialog()
 {
+  WriteSettings();
 #ifdef USE_SRCSHOW
     unload_bfd();
 #endif
-  WriteSettings();
   SIM->set_log_viewer(0);
   SIM->set_notify_callback(old_callback, old_callback_arg);
   CloseDialog();
