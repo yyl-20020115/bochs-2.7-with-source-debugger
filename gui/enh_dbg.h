@@ -230,13 +230,13 @@ extern int OneCharWide;    // average width of a char in current font (pixels)
 extern int Sizing;         // current "resizing/docking mode"
 extern int Resize_HiX;     // horizontal limits of the current resize operation (pixels)
 extern int Resize_LoX;
-extern unsigned ListWidthPix[3]; // set initial proportions of Reg, Asm, Dump windows
+extern unsigned ListWidthPix[4]; // set initial proportions of Reg, Asm, Dump windows
 extern int CurCenterList;
 extern bool DumpHasFocus;
 
 // BarClix holds the x-axis position (in pixels or logical units) of the two resizing bars,
 // in parent coordinates (ie. any window that contains the lists)
-extern unsigned short BarClix[2];
+extern unsigned short BarClix[3];
 
 extern bool AtBreak;        // Status indicators
 extern bool StatusChange;

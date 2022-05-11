@@ -1182,7 +1182,7 @@ void sizing_cancel()
         gtk_event_box_set_above_child (GTK_EVENT_BOX(LVEvtBox), FALSE);
         gtk_event_box_set_above_child (GTK_EVENT_BOX(VSepEvtBox1), TRUE);
         gtk_event_box_set_above_child (GTK_EVENT_BOX(VSepEvtBox2), TRUE);
-        //gtk_event_box_set_above_child (GTK_EVENT_BOX(VSepEvtBox3), TRUE);
+        gtk_event_box_set_above_child (GTK_EVENT_BOX(VSepEvtBox3), TRUE);
         if (Sizing < 10)    // cancel (p)resize mode motion detection
             g_signal_handler_disconnect (LVEvtBox, mmov_hID);
         gdk_window_set_cursor (gtk_widget_get_window(LVEvtBox), NULL); // change the cursor to normal
@@ -1699,14 +1699,14 @@ gboolean VsEnter(GtkWidget *widget, GdkEventCrossing *event, gpointer SepNum)
     // turn on presize mode, if some kind of sizing isn't already running
     if (Sizing == 0)
     {
-        Sizing = VsepNum - 2;       // Sizing = -1 or -2 for "presize"
+        Sizing = VsepNum - 3;       // Sizing = -1 or -2 or -3 for "presize"
         gdk_window_set_cursor (gtk_widget_get_window(LVEvtBox), SizeCurs);
         EnterSizeMode = TRUE;
         CurScrX = (unsigned int) (event->x_root + 0.5);
         gtk_event_box_set_above_child (GTK_EVENT_BOX(LVEvtBox), TRUE);
         gtk_event_box_set_above_child (GTK_EVENT_BOX(VSepEvtBox1), FALSE);
         gtk_event_box_set_above_child (GTK_EVENT_BOX(VSepEvtBox2), FALSE);
-        //gtk_event_box_set_above_child (GTK_EVENT_BOX(VSepEvtBox3), FALSE);
+        gtk_event_box_set_above_child (GTK_EVENT_BOX(VSepEvtBox3), FALSE);
         mmov_hID = g_signal_connect (G_OBJECT (LVEvtBox), "motion_notify_event",
             G_CALLBACK (LV_MouseMove), NULL);
     }
@@ -1889,7 +1889,7 @@ void AttachSignals()
     g_signal_connect (G_OBJECT (LVEvtBox), "leave_notify_event", G_CALLBACK (LvLeave), NULL);
     g_signal_connect (G_OBJECT (VSepEvtBox1), "enter_notify_event", G_CALLBACK (VsEnter), (gpointer) 0);
     g_signal_connect (G_OBJECT (VSepEvtBox2), "enter_notify_event", G_CALLBACK (VsEnter), (gpointer) 1);
-    //g_signal_connect (G_OBJECT (VSepEvtBox3), "enter_notify_event", G_CALLBACK (VsEnter), (gpointer) 2);
+    g_signal_connect (G_OBJECT (VSepEvtBox3), "enter_notify_event", G_CALLBACK (VsEnter), (gpointer) 2);
     g_signal_connect (G_OBJECT (LVEvtBox), "button_press_event", G_CALLBACK (LV_MouseDown), NULL);
     g_signal_connect (G_OBJECT (LVEvtBox), "button_release_event", G_CALLBACK (LEB_MouseUp), NULL);
     g_signal_connect (G_OBJECT (LV[0]), "button_release_event", G_CALLBACK (LV_MouseUp), NULL);
@@ -2368,7 +2368,7 @@ bool OSInit()
     gtk_widget_add_events(VSepEvtBox1, GDK_ENTER_NOTIFY_MASK);     
     // masks must be set immediately after creation
     gtk_widget_add_events(VSepEvtBox2, GDK_ENTER_NOTIFY_MASK);
-    //gtk_widget_add_events(VSepEvtBox3, GDK_ENTER_NOTIFY_MASK);
+    gtk_widget_add_events(VSepEvtBox3, GDK_ENTER_NOTIFY_MASK);
     IOVbox = gtk_vbox_new(FALSE, 0);        // stack the Input Entry and Output TextView vertically
 
     // create Input window
