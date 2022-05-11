@@ -2377,9 +2377,11 @@ void OnBreak()
         BottomAsmLA = ~0;       // force an ASM autoload
         StatusChange = TRUE;
     }
+    
+    
     doUpdate();     // do a full "autoupdate"
 
-    char asmtxt[512];
+    char asmtxt[512]={0};
     
     if (In64Mode == FALSE)      // "display" linear addy of the opcode
         sprintf (asmtxt,Fmt32b[UprCase],CurrentAsmLA);
@@ -2415,6 +2417,7 @@ void OnBreak()
     }
     if(last_line!=0)
     {
+        SelectedSrcLine = last_line -1;
         if(load_line == 0)
         {
             doSrcScroll(last_line);

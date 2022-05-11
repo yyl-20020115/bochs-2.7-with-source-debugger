@@ -64,7 +64,7 @@ void ScrollASM(int pixels);
 void ScrollSRC(int pixels);
 
 unsigned int GetLastLine();
-
+extern int SelectedSrcLine;
 void GetLIText(int listnum, int itemnum, int column, char *buf);
 void SetLIState(int listnum, int itemnum, bool Select);
 int GetNextSelectedLI(int listnum, int StartPt);

@@ -2015,12 +2015,13 @@ void ListClr_PaintCb(GtkTreeViewColumn *col,
         {
             g_object_set(renderer, "style", PANGO_STYLE_ITALIC, "style-set", TRUE, NULL);
             g_object_set(renderer, "foreground-gdk", &fg_red, "foreground-set", TRUE, NULL);
-            g_object_set(renderer, "cell-background-gdk", &white, "cell-background-set", TRUE, NULL);
+            g_object_set(renderer, "cell-background-gdk", &ColorList[3], "cell-background-set", TRUE, NULL);
         }
         else if(rownum==SelectedSrcLine)
         {
             g_object_set(renderer, "weight", PANGO_WEIGHT_BOLD, "weight-set", TRUE, NULL);
-            g_object_set(renderer, "foreground-gdk", &ColorList[8], "foreground-set", TRUE, NULL);
+            if (rownum != GetLastLine()-1)
+                g_object_set(renderer, "foreground-gdk", &ColorList[8], "foreground-set", TRUE, NULL);
             g_object_set(renderer, "cell-background-gdk", &ColorList[3], "cell-background-set", TRUE, NULL);
         }
         return;
@@ -2098,10 +2099,12 @@ void ListClr_PaintCb(GtkTreeViewColumn *col,
         // extra visuals for current RIP and breakpoints -- use bold and italic on mnemonics
         if (colnum == 5 && AsmClrNum != 0)
         {
-            if ((AsmClrNum&1) != 0)     // current RIP
+            if ((AsmClrNum&1) != 0) {    // current RIP
                 g_object_set(renderer, "weight", PANGO_WEIGHT_BOLD, "weight-set", TRUE, NULL);
-            if ((AsmClrNum&2) != 0)     // breakpoint
+            }
+            if ((AsmClrNum&2) != 0)  {   // breakpoint
                 g_object_set(renderer, "style", PANGO_STYLE_ITALIC, "style-set", TRUE, NULL);
+            }
         }
         else
         {
